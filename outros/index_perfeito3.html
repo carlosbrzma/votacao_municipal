@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votação dos Vereadores</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: url('ap.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+        }
+        .coluna-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .coluna {
+            text-align: left;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .checkbox-group { display: flex; align-items: center; }
+        label { width: 180px; display: inline-block; }
+        .checkbox-group input[type="radio"] { margin: 0 5px; }
+        .green { color: green; }
+        .red { color: red; }
+        .yellow { color: goldenrod; }
+        .resultado {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: left;
+        }
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        button { font-size: 16px; padding: 10px 20px; margin: 5px; }
+        .input-fields {
+            display: flex;
+            flex-direction: column;
+            margin-top: 10px;
+        }
+        .input-fields input {
+            margin-bottom: 5px;
+            padding: 5px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h2></h2>
+    <div class="container">
+        <div class="coluna-wrapper">
+            <div class="coluna" id="coluna1"></div>
+            <div class="coluna" id="coluna2"></div>
+        </div>
+        <div class="resultado">
+            <h3>Resultado:</h3>
+            <p>Derrubada: <span id="derrubada">0</span></p>
+            <p>Manutenção: <span id="manutencao">0</span></p>
+            <p>Abstenção: <span id="abstencao">0</span></p>
+            <h3 id="veto">Veto</h3>
+            <div class="input-fields">
+                <input type="text" id="pl" placeholder="Veto ou PL nº">
+                <input type="text" id="ementa" placeholder="Ementa">
+                <input type="text" id="autor" placeholder="Autor">
+            </div>
+            <div class="buttons">
+                <button onclick="calcular()">Total</button>
+                <button onclick="gerarRelatorio()">Salvar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const { jsPDF } = window.jspdf;
+        const vereadores = [
+            "Aldir Júnior", "André Campos", "Andrey Monteiro", "Antônio Garcez", "Astro de Ogum", 
+            "Beto Castro", "Clara Gomes", "Cleber Verde Filho", "Coletivo Nós", "Coletivo Unidos",
+            "Concita Pinto", "Daniel Oliveira", "Douglas Pinto", "Dr. Joel", "Edson Gaguinho",
+            "Fábio Macedo Filho", "Flávia Berthier", "Marcos Castro", "Marcelo Poeta", "Marlon Botão",
+            "Marquinhos", "Nato Jr.", "Octavio Soeiro", "Paulo Victor", "Professora Magnólia",
+            "Raimundo Jr.", "Raimundo Penha", "Rosana da Saúde", "Thay Evangelista", "Thyago Freitas",
+            "Wendell Martins"
+        ];
+
+        function criarLista(vereadores, colunaId) {
+            let coluna = document.getElementById(colunaId);
+            vereadores.forEach(nome => {
+                let div = document.createElement("div");
+                div.className = "checkbox-group";
+                div.innerHTML = `<label>${nome}</label>
+                    <input type="radio" name="${nome}" value="D"> <span class="green">D</span>
+                    <input type="radio" name="${nome}" value="M"> <span class="red">M</span>
+                    <input type="radio" name="${nome}" value="A"> <span class="yellow">A</span>`;
+                coluna.appendChild(div);
+            });
+        }
+
+        criarLista(vereadores.slice(0, 16), "coluna1");
+        criarLista(vereadores.slice(16), "coluna2");
+
+        function calcular() {
+            let derrubada = document.querySelectorAll('input[value="D"]:checked').length;
+            let manutencao = document.querySelectorAll('input[value="M"]:checked').length;
+            let abstencao = document.querySelectorAll('input[value="A"]:checked').length;
+            
+            document.getElementById("derrubada").innerText = derrubada;
+            document.getElementById("manutencao").innerText = manutencao;
+            document.getElementById("abstencao").innerText = abstencao;
+            document.getElementById("veto").innerText = (derrubada > manutencao) ? "Veto Derrubado" : "Veto Mantido";
+        }
+
+        function gerarRelatorio() {
+            let doc = new jsPDF();
+            let dataAtual = new Date().toLocaleDateString("pt-BR");
+
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text("Câmara Municipal de São Luis", 105, 10, { align: "center" });
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text(`Veto ou PL nº: ${document.getElementById("pl").value}`, 10, 20);
+            doc.text(`Ementa: ${document.getElementById("ementa").value}`, 10, 30);
+            doc.text(`Autor: ${document.getElementById("autor").value}`, 10, 40);
+            doc.text(`Data: ${dataAtual}`, 10, 50);
+            doc.text("Primeiro Secretário: Aldir Júnior (PL)", 10, 60);
+
+            doc.setFontSize(14);
+            doc.text("Votação", 105, 70, { align: "center" });
+
+            doc.setFontSize(9);
+            let y = 80;
+            vereadores.forEach(nome => {
+                let voto = document.querySelector(`input[name="${nome}"]:checked`);
+                let resultadoVoto = voto ? (voto.value === "D" ? "Derrubada" : voto.value === "M" ? "Manutenção" : "Abstenção") : "Não Votou";
+                doc.text(`${nome}: ${resultadoVoto}`, 10, y);
+                y += 10;
+                if (y > 270) { doc.addPage(); y = 10; }
+            });
+
+            doc.addPage();
+            doc.setFontSize(14);
+            doc.text("Status da Votação", 105, 10, { align: "center" });
+
+            doc.setFontSize(12);
+            doc.text(`Derrubada: ${document.getElementById("derrubada").innerText}`, 10, 30);
+            doc.text(`Manutenção: ${document.getElementById("manutencao").innerText}`, 10, 40);
+            doc.text(`Abstenção: ${document.getElementById("abstencao").innerText}`, 10, 50);
+            doc.text(`Resultado Final: ${document.getElementById("veto").innerText}`, 10, 60);
+
+            doc.save(`votacao_${Date.now()}.pdf`);
+            location.reload();
+        }
+
+	// Adiciona funcionalidade de duplo clique para desmarcar opções marcadas
+	   document.querySelectorAll('.checkbox-group input[type="radio"]').forEach(input => {
+           input.addEventListener('dblclick', function () {
+       	   this.checked = false;
+    });
+    });
+
+    </script>
+</body>
+</html>

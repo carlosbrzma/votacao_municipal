@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votação dos Vereadores</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .container { display: flex; justify-content: center; }
+        .coluna { text-align: left; margin: 10px; }
+        .checkbox-group { display: flex; align-items: center; }
+        label { width: 180px; display: inline-block; }
+        .checkbox-group input[type="radio"] { margin: 0 5px; }
+        .green { color: green; }
+        .red { color: red; }
+        .yellow { color: goldenrod; }
+        .buttons { display: flex; justify-content: center; margin-top: 20px; }
+        button { font-size: 16px; padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h2>Votação dos Vereadores</h2>
+    <div class="container">
+        <div class="coluna" id="coluna1"></div>
+        <div class="coluna" id="coluna2"></div>
+    </div>
+    
+    <h3>Resultado:</h3>
+    <p>Derrubada: <span id="derrubada">0</span></p>
+    <p>Manutenção: <span id="manutencao">0</span></p>
+    <p>Abstenção: <span id="abstencao">0</span></p>
+    <h3 id="veto">Veto Mantido</h3>
+    
+    <div class="buttons">
+        <button onclick="calcular()">Total</button>
+        <button onclick="gerarRelatorio()">Novo</button>
+    </div>
+    
+    <script>
+        const { jsPDF } = window.jspdf;
+        const vereadores = [
+            "Aldir Júnior", "André Campos", "Andrey Monteiro", "Antônio Garcez", "Astro de Ogum", 
+            "Beto Castro", "Clara Gomes", "Cleber Verde Filho", "Concita Pinto", "Daniel Oliveira", 
+            "Douglas Pinto", "Dr. Joel", "Edson Gaguinho", "Fábio Macedo Filho", "Flávia Berthier", "Marcos Castro"
+        ];
+        const vereadores2 = [
+            "Marcelo Poeta", "Marlon Botão", "Marquinhos", "Nato Jr.", "Octavio Soeiro", 
+            "Paulo Victor", "Professora Magnólia", "Raimundo Jr.", "Raimundo Penha", "Rosana da Saúde", 
+            "Thay Evangelista", "Thyago Freitas"
+        ];
+        
+        function criarLista(vereadores, colunaId) {
+            let coluna = document.getElementById(colunaId);
+            vereadores.forEach(nome => {
+                let div = document.createElement("div");
+                div.className = "checkbox-group";
+                div.innerHTML = `<label>${nome}</label>
+                    <input type="radio" name="${nome}" value="D"> <span class="green">D</span>
+                    <input type="radio" name="${nome}" value="M"> <span class="red">M</span>
+                    <input type="radio" name="${nome}" value="A"> <span class="yellow">A</span>`;
+                coluna.appendChild(div);
+            });
+        }
+        
+        criarLista(vereadores, "coluna1");
+        criarLista(vereadores2, "coluna2");
+        
+        function calcular() {
+            let derrubada = document.querySelectorAll('input[value="D"]:checked').length;
+            let manutencao = document.querySelectorAll('input[value="M"]:checked').length;
+            let abstencao = document.querySelectorAll('input[value="A"]:checked').length;
+            
+            document.getElementById("derrubada").innerText = derrubada;
+            document.getElementById("manutencao").innerText = manutencao;
+            document.getElementById("abstencao").innerText = abstencao;
+            
+            document.getElementById("veto").innerText = (derrubada > manutencao) ? "Veto Derrubado" : "Veto Mantido";
+        }
+        
+        function gerarRelatorio() {
+            let doc = new jsPDF();
+            doc.setFont("helvetica", "bold");
+            doc.text("Votação dos Vereadores", 10, 10);
+            doc.setFont("helvetica", "normal");
+            let y = 20;
+            
+            let derrubada = 0, manutencao = 0, abstencao = 0;
+            let votos = [];
+            
+            [...vereadores, ...vereadores2].forEach(nome => {
+                let voto = document.querySelector(`input[name='${nome}']:checked`);
+                let resultado = voto ? (voto.value === "D" ? "Derrubada" : voto.value === "M" ? "Manutenção" : "Abstenção") : "Não votou";
+                
+                if (resultado === "Derrubada") derrubada++;
+                if (resultado === "Manutenção") manutencao++;
+                if (resultado === "Abstenção") abstencao++;
+                
+                votos.push(`${nome}: ${resultado}`);
+            });
+
+            votos.forEach(linha => {
+                doc.text(linha, 10, y);
+                y += 10;
+                if (y > 270) { // Evita que o texto ultrapasse a página
+                    doc.addPage();
+                    y = 20;
+                }
+            });
+
+            y += 10;
+            doc.setFont("helvetica", "bold");
+            doc.text("Resumo da Votação:", 10, y);
+            y += 10;
+            doc.setFont("helvetica", "normal");
+            doc.text(`Derrubada: ${derrubada}`, 10, y);
+            y += 10;
+            doc.text(`Manutenção: ${manutencao}`, 10, y);
+            y += 10;
+            if (abstencao > 0) {
+                doc.text(`Abstenção: ${abstencao}`, 10, y);
+                y += 10;
+            }
+
+            let statusFinal = (derrubada > manutencao) ? "Veto Derrubado" : "Veto Mantido";
+            y += 10;
+            doc.setFont("helvetica", "bold");
+            doc.text(`Status Final: ${statusFinal}`, 10, y);
+
+            let nomeArquivo = `votacao_${Date.now()}.pdf`;
+            doc.save(nomeArquivo);
+            location.reload();
+        }
+    </script>
+</body>
+</html>

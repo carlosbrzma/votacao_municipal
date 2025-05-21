@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votação dos Vereadores</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            text-align: left;
+        }
+        .vereador {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .checkboxes input {
+            transform: scale(1.2);
+            margin-left: 10px;
+        }
+        .btn {
+            margin-top: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .verde { background-color: lightgreen; }
+        .vermelho { background-color: lightcoral; }
+        .amarelo { background-color: lightyellow; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Votação dos Vereadores</h2>
+        <div id="lista"></div>
+        <button class="btn" onclick="calcularTotal()">Total</button>
+        <button class="btn" onclick="resetar()">Novo</button>
+        <h3>Resultado:</h3>
+        <p>Derrubada: <span id="derrubada">0</span></p>
+        <p>Manutenção: <span id="manutencao">0</span></p>
+        <p>Abstenção: <span id="abstencao">0</span></p>
+        <h3 id="resultado">Veto Mantido</h3>
+    </div>
+    
+    <script>
+        const nomes = [
+            "Aldir Júnior", "André Campos", "Andrey Monteiro", "Antônio Garcez", "Astro de Ogum",
+            "Beto Castro", "Clara Gomes", "Cleber Verde Filho", "Concita Pinto", "Daniel Oliveira",
+            "Douglas Pinto", "Dr. Joel", "Edson Gaguinho", "Fábio Macedo Filho", "Flávia Berthier",
+            "Marcos Castro", "Marcelo Poeta", "Marlon Botão", "Marquinhos", "Nato Jr.",
+            "Octavio Soeiro", "Paulo Victor", "Professora Magnólia", "Raimundo Jr.", "Raimundo Penha",
+            "Rosana da Saúde", "Thay Evangelista", "Thyago Freitas"
+        ];
+
+        function criarLista() {
+            const lista = document.getElementById("lista");
+            lista.innerHTML = "";
+            nomes.forEach(nome => {
+                const div = document.createElement("div");
+                div.classList.add("vereador");
+                div.innerHTML = `
+                    <span>${nome}</span>
+                    <div class="checkboxes">
+                        <input type="checkbox" class="derrubada" onchange="marcar(this, 'verde')"> D
+                        <input type="checkbox" class="manutencao" onchange="marcar(this, 'vermelho')"> M
+                        <input type="checkbox" class="abstencao" onchange="marcar(this, 'amarelo')"> A
+                    </div>
+                `;
+                lista.appendChild(div);
+            });
+        }
+
+        function marcar(elemento, cor) {
+            const grupo = elemento.parentElement.querySelectorAll("input");
+            grupo.forEach(cb => {
+                if (cb !== elemento) {
+                    cb.checked = false;
+                    cb.parentElement.classList.remove("verde", "vermelho", "amarelo");
+                }
+            });
+            elemento.parentElement.classList.toggle(cor, elemento.checked);
+        }
+
+        function calcularTotal() {
+            let derrubada = document.querySelectorAll(".derrubada:checked").length;
+            let manutencao = document.querySelectorAll(".manutencao:checked").length;
+            let abstencao = document.querySelectorAll(".abstencao:checked").length;
+            
+            document.getElementById("derrubada").innerText = derrubada;
+            document.getElementById("manutencao").innerText = manutencao;
+            document.getElementById("abstencao").innerText = abstencao;
+            
+            if (derrubada > manutencao) {
+                document.getElementById("resultado").innerText = "Veto Derrubado";
+            } else {
+                document.getElementById("resultado").innerText = "Veto Mantido";
+            }
+        }
+
+        function resetar() {
+            document.querySelectorAll("input[type=checkbox]").forEach(cb => {
+                cb.checked = false;
+                cb.parentElement.classList.remove("verde", "vermelho", "amarelo");
+            });
+            document.getElementById("derrubada").innerText = "0";
+            document.getElementById("manutencao").innerText = "0";
+            document.getElementById("abstencao").innerText = "0";
+            document.getElementById("resultado").innerText = "Veto Mantido";
+        }
+
+        criarLista();
+    </script>
+</body>
+</html>
